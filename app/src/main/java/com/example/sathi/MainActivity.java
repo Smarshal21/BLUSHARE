@@ -317,7 +317,7 @@ public class MainActivity extends AppCompatActivity {
 
         public void writeImage(Bitmap bitmap) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 50, outputStream);
             byte[] imageBytes = outputStream.toByteArray();
             String base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT);
             Log.d("Main Base64", base64Image); // Log the received base64 string
