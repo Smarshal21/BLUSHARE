@@ -60,7 +60,6 @@ public class MainActivity extends AppCompatActivity {
     BluetoothAdapter bluetoothAdapter;
     BluetoothDevice[] btArray;
     SendReceive sendReceive;
-    Bitmap bitmapimg;
 
     static final int STATE_LISTENING = 1;
     static final int STATE_CONNECTING = 2;
@@ -141,11 +140,11 @@ public class MainActivity extends AppCompatActivity {
         });
 
         send.setOnClickListener(view -> {
-            sendReceive.writeImage();
+            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.happyicon);
+            sendReceive.writeImage(bitmap);
         });
     }
 
-    // Handle Bluetooth enable request result
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -159,7 +158,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    // Handler to handle Bluetooth communication messages
     Handler handler = new Handler(new Handler.Callback() {
         @Override
         public boolean handleMessage(Message msg) {
@@ -233,7 +231,6 @@ public class MainActivity extends AppCompatActivity {
 
         public ClientClass(BluetoothDevice device1) {
             device = device1;
-
             try {
                 socket = device.createRfcommSocketToServiceRecord(MY_UUID);
             } catch (IOException e) {
@@ -285,12 +282,28 @@ public class MainActivity extends AppCompatActivity {
             byte[] buffer = new byte[1024];
             int bytes;
 
+            ByteArrayOutputStream dataBuffer = new ByteArrayOutputStream();
+
             while (true) {
                 try {
                     bytes = inputStream.read(buffer);
                     if (bytes > 0) {
-                        byte[] receivedData = Arrays.copyOf(buffer, bytes);
-                        handler.obtainMessage(STATE_MESSAGE_RECEIVED, bytes, -1, receivedData).sendToTarget();
+                        dataBuffer.write(buffer, 0, bytes);
+                        byte[] receivedData = dataBuffer.toByteArray();
+                        String receivedString = new String(receivedData, StandardCharsets.UTF_8);
+                        Log.d("Received Data", receivedString); // Log the received data
+                        if (receivedString.endsWith("\n")) {
+                            // We've received a complete message (assuming it ends with a newline)
+                            String base64Image = receivedString.trim();
+                            Log.d("Base64 Image", base64Image); // Log the Base64 data
+                            Bitmap image = decodeImage(base64Image.getBytes());
+                            if (image != null) {
+                                // Now you can use the 'image' Bitmap for your desired operations.
+                                // For example, you can display it in an ImageView:
+                                runOnUiThread(() -> imageView.setImageBitmap(image)); // Assuming 'imageView' is your ImageView
+                            }
+                            dataBuffer.reset(); // Clear the buffer for the next message
+                        }
                     }
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -299,9 +312,11 @@ public class MainActivity extends AppCompatActivity {
             }
         }
 
-        public void writeImage() {
+
+
+
+        public void writeImage(Bitmap bitmap) {
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-            Bitmap bitmap = BitmapFactory.decodeResource(getResources(), R.drawable.happyicon);
             bitmap.compress(Bitmap.CompressFormat.JPEG, 100, outputStream);
             byte[] imageBytes = outputStream.toByteArray();
             String base64Image = Base64.encodeToString(imageBytes, Base64.DEFAULT);
@@ -318,6 +333,7 @@ public class MainActivity extends AppCompatActivity {
 
             try {
                 byte[] imageBytes = Base64.decode(encodedImage, Base64.DEFAULT);
+                Log.e("Encoded Image", encodedImage.toString());
                 if (imageBytes != null && imageBytes.length > 0) {
                     return BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
                 } else {

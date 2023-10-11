@@ -58,7 +58,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginTop="15dp"
-        app:srcCompat="@drawable/stupidicon"
+        app:srcCompat="@drawable/ic_launcher_background"
         android:layout_below="@+id/listview"
         android:layout_centerHorizontal="true" />
 
